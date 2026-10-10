@@ -1,0 +1,29 @@
+{
+  "name": "cameroon-life",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Cameroon Life - a browser MMO life sim set in Cameroon (Phase 1)",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:client": "npm run dev -w @cameroon-life/client",
+    "dev:server": "npm run dev -w @cameroon-life/server",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "gen:assets": "tsx tools/gen-assets.ts",
+    "gen:map": "tsx tools/gen-map.ts",
+    "gen": "npm run gen:assets && npm run gen:map && npm run gen:seed",
+    "gen:seed": "tsx tools/gen-seed.ts",
+    "preview:map": "tsx tools/preview-map.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
