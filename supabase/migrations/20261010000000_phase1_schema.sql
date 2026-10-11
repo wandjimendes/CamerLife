@@ -204,11 +204,16 @@ language sql stable security definer set search_path = public as $$
   select coalesce((select is_admin from public.users where id = auth.uid()), false);
 $$;
 
+-- True only for calls made with the service role key (game server, admin CLI).
+-- Deliberately checks the JWT claim ONLY: inside a SECURITY DEFINER function
+-- current_user is the function owner (postgres), so a role-name fallback would
+-- let any signed-in player pass the "server only" checks below.
+-- To call server-only RPCs from the SQL editor, first run:
+--   select set_config('request.jwt.claims', '{"role":"service_role"}', true);
 create or replace function public.is_service_role()
 returns boolean
 language sql stable as $$
-  select coalesce(current_setting('request.jwt.claims', true)::jsonb ->> 'role', '') = 'service_role'
-      or current_user in ('postgres', 'service_role');
+  select coalesce(current_setting('request.jwt.claims', true)::jsonb ->> 'role', '') = 'service_role';
 $$;
 
 -- Family-name availability check used by the signup form (anon callable).

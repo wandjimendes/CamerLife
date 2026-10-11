@@ -17,9 +17,11 @@
     "gen:map": "tsx tools/gen-map.ts",
     "gen": "npm run gen:assets && npm run gen:map && npm run gen:seed",
     "gen:seed": "tsx tools/gen-seed.ts",
-    "preview:map": "tsx tools/preview-map.ts"
+    "preview:map": "tsx tools/preview-map.ts",
+    "check:sql": "tsx tools/check-sql.ts"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "tsx": "^4.19.0",
     "typescript": "^5.9.3"
   },
