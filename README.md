@@ -20,11 +20,31 @@ used by the server to validate door interactions.
 
 ## Local development
 
-Requirements: Node 20+, a Supabase project (free tier is fine).
+Requirements: Node 20+. No Supabase account needed for the offline mode.
+
+### Offline (zero config)
+
+`npm run dev:db` starts a local Supabase stand-in: an in-process Postgres
+(PGlite) with the real migration + seed behind a GoTrue/PostgREST-compatible
+HTTP API. RLS and the RPCs behave exactly as on Supabase.
 
 ```bash
 npm install
+npm run dev:db -- --write-env   # terminal 1: mock Supabase on :54321, writes apps/*/.env
+npm run dev:server              # terminal 2: Colyseus on :2567
+npm run dev:client              # terminal 3: Vite on http://localhost:5173
+```
 
+Data is in-memory by default (`--persist` keeps it in `.pglite/`). The
+admin CLI below works against it too.
+
+Behind a tunnel or cloud preview, set `VITE_SUPABASE_URL=/supabase` and
+`VITE_COLYSEUS_URL=/colyseus` so the browser talks to Vite only (same
+origin, no CORS) and Vite proxies to the two local services.
+
+### Against a real Supabase project
+
+```bash
 # 1. Database — in the Supabase SQL editor (or `supabase db push`) run, in order:
 #      supabase/migrations/20261010000000_phase1_schema.sql
 #      supabase/seed.sql
@@ -47,6 +67,7 @@ npm run gen           # regenerate assets, map and seed from packages/shared
 npm run preview:map   # render the Douala map to /tmp/logs/douala-preview.png
 npm run check:sql     # apply migration + seed to an in-process Postgres (PGlite)
                       # and smoke-test every RPC + RLS policy. Run after any schema change.
+npm run dev:db        # local Supabase stand-in (see "Offline" above)
 ```
 
 ## Admin (Phase 1 CLI)
