@@ -1,7 +1,12 @@
 import { Client, type Room } from "colyseus.js";
 import { getAccessToken } from "./supabase";
 
-const endpoint = (import.meta.env.VITE_COLYSEUS_URL as string | undefined) ?? "ws://localhost:2567";
+const rawEndpoint = (import.meta.env.VITE_COLYSEUS_URL as string | undefined) ?? "ws://localhost:2567";
+
+/** A relative URL (e.g. "/colyseus") targets the Vite dev proxy on the current origin. */
+const endpoint = rawEndpoint.startsWith("/")
+  ? `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}${rawEndpoint}`
+  : rawEndpoint;
 
 export const colyseus = new Client(endpoint);
 

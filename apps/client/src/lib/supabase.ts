@@ -1,7 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const rawUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+
+/** A relative URL (e.g. "/supabase") targets the Vite dev proxy on the current origin. */
+const url = rawUrl?.startsWith("/") ? `${window.location.origin}${rawUrl}` : rawUrl;
 
 export const supabaseConfigured = Boolean(url && anon);
 
