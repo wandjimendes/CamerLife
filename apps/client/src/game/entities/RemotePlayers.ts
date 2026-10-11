@@ -31,10 +31,9 @@ export class RemotePlayers {
   constructor(scene: Phaser.Scene, room: Room, private mySessionId: string) {
     this.group = scene.add.group();
     const $ = getStateCallbacks(room) as unknown as (s: unknown) => any;
-    const players = (room.state as { players: unknown }).players;
 
     $(room.state).players.onAdd((p: NetPlayer, sessionId: string) => {
-      this.updateCount(players);
+      this.updateCount(room);
       if (sessionId === this.mySessionId) return;
       const c = new Character(scene, p.x, p.y, p.name, p).setName(p.name);
       c.setDepth(p.y);
@@ -52,7 +51,7 @@ export class RemotePlayers {
     });
 
     $(room.state).players.onRemove((_p: NetPlayer, sessionId: string) => {
-      this.updateCount(players);
+      this.updateCount(room);
       const c = this.chars.get(sessionId);
       if (c) {
         c.destroy();
@@ -61,9 +60,14 @@ export class RemotePlayers {
     });
   }
 
-  private updateCount(players: unknown) {
-    const size = (players as { size?: number }).size ?? 0;
-    useGame.getState().setOnlineCount(size);
+  /**
+   * Must read room.state.players lazily: the first onAdd fires while the
+   * initial full state is still being decoded, before the map exists on
+   * the root object captured at construction time.
+   */
+  private updateCount(room: Room) {
+    const players = (room.state as { players?: { size?: number } }).players;
+    useGame.getState().setOnlineCount(players?.size ?? 0);
   }
 
   update(dt: number) {
