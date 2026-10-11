@@ -1,6 +1,7 @@
 import { FURNITURE_CATALOG } from "@cameroon-life/shared";
 import { useGame } from "../store/game";
 import { bridge } from "../game/bridge";
+import { Panel } from "./Panel";
 
 /** Shown inside a house. Owners / tenants can place, move and remove furniture. */
 export function FurniturePanel() {
@@ -12,13 +13,12 @@ export function FurniturePanel() {
   if (!house) return null;
 
   return (
-    <div className="panel">
-      <h3>{house.label}</h3>
+    <Panel title={house.label} collapseOn={placingKey}>
       <div className="sub">{house.isOwner ? "You own this home." : house.canEdit ? "You rent this home." : "Visiting - listed property."}</div>
 
       {house.canEdit && (
         <>
-          <div className="sub">Pick an item, then click a floor tile. Click a placed item to select it, click again elsewhere to move it.</div>
+          <div className="sub">Pick an item, then tap a floor tile. Tap a placed item to select it, tap elsewhere to move it.</div>
           <div className="catalog">
             {FURNITURE_CATALOG.map((f) => (
               <button key={f.key} className={placingKey === f.key ? "active" : ""} onClick={() => setPlacingKey(placingKey === f.key ? null : f.key)}>
@@ -43,6 +43,6 @@ export function FurniturePanel() {
       <button className="btn secondary" onClick={() => bridge.emit("exit-house")}>
         Leave house
       </button>
-    </div>
+    </Panel>
   );
 }

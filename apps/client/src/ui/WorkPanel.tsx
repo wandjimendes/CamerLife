@@ -3,6 +3,7 @@ import { SHIFT_DURATION_MS, TownMsg, WORK_PROMPT_TIMEOUT_MS, formatFcfa, type Di
 import { net } from "../lib/colyseus";
 import { useGame } from "../store/game";
 import { bridge } from "../game/bridge";
+import { Panel } from "./Panel";
 
 const ARROW: Record<Direction, string> = { up: "↑", down: "↓", left: "←", right: "→" };
 const KEY_TO_DIR: Record<string, Direction> = {
@@ -43,8 +44,7 @@ export function WorkPanel() {
 
   return (
     <>
-      <div className="panel">
-        <h3>{facility.name}</h3>
+      <Panel title={facility.name}>
         <div className="sub">
           {facility.jobTitle} · {formatFcfa(facility.salary)} / shift
         </div>
@@ -72,7 +72,7 @@ export function WorkPanel() {
             </button>
           </>
         )}
-      </div>
+      </Panel>
       <MiniGame />
     </>
   );

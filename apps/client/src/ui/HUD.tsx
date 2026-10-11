@@ -2,6 +2,8 @@ import { formatFcfa } from "@cameroon-life/shared";
 import { useAuth } from "../store/auth";
 import { useGame } from "../store/game";
 import { bridge } from "../game/bridge";
+import { isTouchDevice } from "../game/touch";
+import { TouchControls } from "./TouchControls";
 
 export function HUD() {
   const me = useAuth((s) => s.me);
@@ -11,10 +13,12 @@ export function HUD() {
   return (
     <div className="hud">
       <div className="hud-top">
-        <div className="name">
-          {me?.first_name} {me?.family_name}
+        <div className="hud-id">
+          <div className="name">
+            {me?.first_name} {me?.family_name}
+          </div>
+          <div className="balance">{formatFcfa(me?.balance ?? 0)}</div>
         </div>
-        <div className="balance">{formatFcfa(me?.balance ?? 0)}</div>
         <div className="meta">
           <span>
             <span className={`dot ${connected ? "on" : ""}`} /> {connected ? "Online" : "Offline"}
@@ -37,11 +41,11 @@ export function HUD() {
 
       {prompt && (
         <button className="prompt" onClick={() => bridge.emit("interact")}>
-          <kbd>E</kbd> {prompt.text}
+          {!isTouchDevice && <kbd>E</kbd>} {prompt.text}
         </button>
       )}
 
-      <div className="controls-hint">WASD / arrows to move · E to interact</div>
+      {isTouchDevice ? <TouchControls /> : <div className="controls-hint">WASD / arrows to move · E to interact</div>}
 
       {!phoneOpen && (
         <button className="phone-toggle" onClick={togglePhone} aria-label="Open phone">

@@ -25,6 +25,16 @@ body,
   overflow: hidden;
   background: #0f1a12;
 }
+#root {
+  /* mobile browsers: ignore the address bar when sizing the game */
+  height: 100dvh;
+}
+button,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
 
 button {
   font: inherit;
@@ -110,6 +120,7 @@ textarea {
   display: grid;
   place-items: center;
   padding: 24px;
+  -webkit-overflow-scrolling: touch;
   background:
     radial-gradient(circle at 20% 20%, rgba(246, 197, 0, 0.25), transparent 40%),
     radial-gradient(circle at 80% 80%, rgba(200, 16, 46, 0.25), transparent 40%),
@@ -251,6 +262,12 @@ textarea {
   min-width: 190px;
   backdrop-filter: blur(6px);
 }
+.hud-id {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
 .hud-top .name {
   font-weight: 800;
   font-size: 15px;
@@ -369,6 +386,7 @@ textarea {
   left: 12px;
   top: 130px;
   width: 280px;
+  max-height: calc(100% - 142px);
   background: var(--paper);
   border-radius: 16px;
   padding: 14px;
@@ -376,10 +394,35 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  overflow: auto;
 }
 .panel h3 {
   margin: 0;
   font-size: 16px;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.panel-toggle {
+  border: 0;
+  background: #ece8dd;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  font-weight: 800;
+  flex: none;
+}
+.panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.panel.collapsed {
+  width: auto;
+  max-width: 280px;
 }
 .panel .sub {
   color: var(--muted);
@@ -433,7 +476,7 @@ textarea {
   padding: 24px 28px;
   text-align: center;
   box-shadow: var(--shadow);
-  min-width: 320px;
+  width: min(380px, calc(100% - 24px));
 }
 .minigame-card h2 {
   margin: 0 0 6px;
@@ -475,7 +518,7 @@ textarea {
 }
 .arrow-pad {
   display: grid;
-  grid-template-columns: repeat(3, 44px);
+  grid-template-columns: repeat(3, 54px);
   gap: 6px;
   justify-content: center;
   margin-top: 10px;
@@ -716,4 +759,192 @@ textarea {
   place-items: center;
   color: #fff;
   font-weight: 800;
+}
+
+/* ---------------- Touch controls ---------------- */
+.dpad {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: grid;
+  grid-template-areas:
+    ". up ."
+    "left . right"
+    ". down .";
+  grid-template-columns: repeat(3, 52px);
+  grid-template-rows: repeat(3, 52px);
+  gap: 4px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.dpad button {
+  border: 0;
+  border-radius: 14px;
+  background: rgba(20, 20, 20, 0.6);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+  backdrop-filter: blur(4px);
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.dpad button:active {
+  background: var(--green);
+}
+
+/* ---------------- Small screens ---------------- */
+@media (max-width: 720px) {
+  .auth {
+    padding: 12px;
+    align-items: start;
+  }
+  .auth-card {
+    padding: 18px;
+    border-radius: 16px;
+  }
+  .auth-card h1 {
+    font-size: 26px;
+  }
+  .row {
+    grid-template-columns: 1fr;
+  }
+  .creator {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+  .creator canvas {
+    width: 80px;
+    height: 120px;
+  }
+
+  /* HUD becomes a slim bar across the top */
+  .hud-top {
+    left: 8px;
+    right: 8px;
+    top: 8px;
+    min-width: 0;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+  }
+  .hud-id {
+    flex: 1;
+  }
+  .hud-top .name {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hud-top .balance {
+    font-size: 15px;
+  }
+  .hud-top .meta {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0;
+    font-size: 11px;
+  }
+  .hud-top button {
+    margin-top: 0;
+    align-self: center;
+  }
+  .toasts {
+    top: 68px;
+    left: 8px;
+    right: 8px;
+    transform: none;
+  }
+  .toast {
+    max-width: 100%;
+  }
+
+  /* panels sit under the HUD bar; collapsible so they don't cover the room */
+  .panel {
+    left: 8px;
+    right: 8px;
+    top: 68px;
+    width: auto;
+    max-height: calc(100% - 68px - 200px);
+    padding: 12px;
+  }
+  .panel.collapsed {
+    max-width: none;
+    right: auto;
+  }
+  .catalog {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .prompt {
+    bottom: 196px;
+    left: 8px;
+    right: 8px;
+    transform: none;
+    justify-content: center;
+  }
+  .controls-hint {
+    display: none;
+  }
+  .phone-toggle {
+    right: 12px;
+    bottom: 12px;
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+  }
+  .phone {
+    inset: 0;
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    padding: 8px;
+  }
+  .phone-screen {
+    border-radius: 16px;
+  }
+  .minigame-card {
+    padding: 18px 14px;
+  }
+  .arrow {
+    width: 46px;
+    height: 46px;
+    font-size: 22px;
+  }
+  .arrow-pad {
+    grid-template-columns: repeat(3, 56px);
+    gap: 8px;
+  }
+  .arrow-pad .arrow {
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+  }
+}
+
+/* short landscape phones: keep overlays off the play area */
+@media (max-height: 480px) and (orientation: landscape) {
+  .hud-top {
+    padding: 6px 10px;
+  }
+  .panel {
+    top: 60px;
+    right: auto;
+    width: 260px;
+    max-height: calc(100% - 72px);
+  }
+  .prompt {
+    bottom: 12px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+  .dpad {
+    grid-template-columns: repeat(3, 44px);
+    grid-template-rows: repeat(3, 44px);
+    left: 10px;
+    bottom: 10px;
+  }
 }

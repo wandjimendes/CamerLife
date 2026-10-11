@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { PLAYER_SPEED, type Direction } from "@cameroon-life/shared";
 import { useGame } from "../store/game";
+import { touchInput } from "./touch";
 
 export interface MoveInput {
   vx: number;
@@ -37,12 +38,13 @@ export class PlayerInput {
 
   read(): MoveInput {
     if (uiHasFocus()) return { vx: 0, vy: 0, dir: null, moving: false };
+    const t = touchInput.held;
     let vx = 0;
     let vy = 0;
-    if (this.cursors.left.isDown || this.wasd.A.isDown) vx = -1;
-    else if (this.cursors.right.isDown || this.wasd.D.isDown) vx = 1;
-    if (this.cursors.up.isDown || this.wasd.W.isDown) vy = -1;
-    else if (this.cursors.down.isDown || this.wasd.S.isDown) vy = 1;
+    if (this.cursors.left.isDown || this.wasd.A.isDown || t.has("left")) vx = -1;
+    else if (this.cursors.right.isDown || this.wasd.D.isDown || t.has("right")) vx = 1;
+    if (this.cursors.up.isDown || this.wasd.W.isDown || t.has("up")) vy = -1;
+    else if (this.cursors.down.isDown || this.wasd.S.isDown || t.has("down")) vy = 1;
     const moving = vx !== 0 || vy !== 0;
     let dir: Direction | null = null;
     if (moving) {

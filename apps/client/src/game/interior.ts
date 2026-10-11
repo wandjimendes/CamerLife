@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { T, TILE } from "@cameroon-life/shared";
+import { SMALL_SCREEN } from "./touch";
 
 export interface Interior {
   map: Phaser.Tilemaps.Tilemap;
@@ -70,7 +71,10 @@ export function buildInterior(
   };
 }
 
-const INTERIOR_ZOOM = 3;
+/** Small screens (phones) get a wider view; tiles are 16px so 3x is a lot on 390px. */
+export function gameZoom(scene: Phaser.Scene): number {
+  return scene.scale.width < SMALL_SCREEN ? 2 : 3;
+}
 
 /**
  * Points the main camera at an interior. Rooms that fit on screen are shown
@@ -80,11 +84,12 @@ const INTERIOR_ZOOM = 3;
  */
 export function fitInteriorCamera(scene: Phaser.Scene, interior: Interior, follow: Phaser.GameObjects.GameObject): void {
   const cam = scene.cameras.main;
-  cam.setZoom(INTERIOR_ZOOM);
   cam.setRoundPixels(true);
 
   const apply = () => {
-    const fits = interior.widthPx * INTERIOR_ZOOM <= scene.scale.width && interior.heightPx * INTERIOR_ZOOM <= scene.scale.height;
+    const zoom = gameZoom(scene);
+    cam.setZoom(zoom);
+    const fits = interior.widthPx * zoom <= scene.scale.width && interior.heightPx * zoom <= scene.scale.height;
     if (fits) {
       cam.stopFollow();
       cam.removeBounds();

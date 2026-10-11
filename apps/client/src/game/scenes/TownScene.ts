@@ -18,6 +18,8 @@ import { bridge } from "../bridge";
 import { PlayerInput } from "../input";
 import { Character } from "../entities/Character";
 import { RemotePlayers } from "../entities/RemotePlayers";
+import { gameZoom } from "../interior";
+import { SMALL_SCREEN } from "../touch";
 
 interface TownInit {
   townId: string;
@@ -116,19 +118,26 @@ export class TownScene extends Phaser.Scene {
     // --- cameras ---
     const cam = this.cameras.main;
     cam.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
-    cam.setZoom(3);
+    cam.setZoom(gameZoom(this));
     cam.startFollow(this.player, true, 0.15, 0.15);
     cam.setRoundPixels(true);
 
-    // mini-map showing the facades of the whole street
-    const miniW = 192;
-    const miniH = Math.round((miniW * map.heightInPixels) / map.widthInPixels);
-    const mini = this.cameras.add(this.scale.width - miniW - 12, 12, miniW, miniH, false, "minimap");
-    mini.setZoom(miniW / map.widthInPixels).setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+    // mini-map showing the facades of the whole street; sits under the HUD bar on phones
+    const mini = this.cameras.add(0, 0, 192, 64, false, "minimap");
     mini.setBackgroundColor(0x000000);
-    mini.centerOn(map.widthInPixels / 2, map.heightInPixels / 2);
     mini.setAlpha(0.9);
-    this.scale.on("resize", (size: Phaser.Structs.Size) => mini.setPosition(size.width - miniW - 12, 12));
+    const layoutMini = () => {
+      const small = this.scale.width < SMALL_SCREEN;
+      const miniW = small ? 144 : 192;
+      const miniH = Math.round((miniW * map.heightInPixels) / map.widthInPixels);
+      mini.setSize(miniW, miniH).setPosition(this.scale.width - miniW - 12, small ? 72 : 12);
+      mini.setZoom(miniW / map.widthInPixels).setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+      mini.centerOn(map.widthInPixels / 2, map.heightInPixels / 2);
+      cam.setZoom(gameZoom(this));
+    };
+    layoutMini();
+    this.scale.on("resize", layoutMini);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off("resize", layoutMini));
 
     this.input2 = new PlayerInput(this);
 
