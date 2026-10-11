@@ -41,7 +41,7 @@ create table public.families (
   created_by uuid,
   created_at timestamptz not null default now()
 );
--- Family Name is UNIQUE (case-insensitive).
+-- Family names are NOT unique (relaxed in 20261011000000_family_names_not_unique.sql).
 create unique index families_name_unique_ci on public.families (lower(name));
 
 create table public.users (
@@ -255,7 +255,7 @@ begin
   -- Random starting budget: 50k / 500k / 5M FCFA
   v_budget := (array[50000, 500000, 5000000])[1 + floor(random() * 3)::int];
 
-  -- Family Name must be unique: the unique index raises if taken, which fails signup.
+  -- Every signup founds a new family (names need not be unique - see 20261011000000).
   insert into public.families (name, created_by) values (v_family, null) returning id into v_fam_id;
 
   insert into public.users (id, first_name, family_id, hair, skin, clothes, balance)

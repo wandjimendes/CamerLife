@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { CLOTHES_COLORS, HAIR_STYLES, SKIN_TONES, STARTING_BUDGETS, formatFcfa, type FamilyRole } from "@cameroon-life/shared";
 import { errorMessage, supabase, supabaseConfigured } from "../lib/supabase";
 import { CharacterPreview } from "./CharacterPreview";
@@ -15,24 +15,9 @@ export function AuthScreen() {
   const [hair, setHair] = useState(0);
   const [skin, setSkin] = useState(0);
   const [clothes, setClothes] = useState(0);
-  const [familyAvailable, setFamilyAvailable] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-
-  // live Family Name availability check (Family Name is unique)
-  useEffect(() => {
-    const name = familyName.trim();
-    if (mode !== "signup" || name.length < 2) {
-      setFamilyAvailable(null);
-      return;
-    }
-    const t = setTimeout(async () => {
-      const { data, error: e } = await supabase.rpc("is_family_name_available", { p_name: name });
-      if (!e) setFamilyAvailable(Boolean(data));
-    }, 350);
-    return () => clearTimeout(t);
-  }, [familyName, mode]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -46,7 +31,6 @@ export function AuthScreen() {
       } else {
         if (firstName.trim().length < 1) throw new Error("Enter a first name.");
         if (familyName.trim().length < 2) throw new Error("Family name must be at least 2 characters.");
-        if (familyAvailable === false) throw new Error("That family name is already taken.");
         const { data, error: err } = await supabase.auth.signUp({
           email,
           password,
@@ -105,9 +89,7 @@ export function AuthScreen() {
               <label className="field">
                 Family name
                 <input value={familyName} onChange={(e) => setFamilyName(e.target.value)} maxLength={24} placeholder="Ngono" required />
-                <span className={familyAvailable === false ? "error" : "hint"}>
-                  {familyAvailable === null ? "Must be unique - this founds your family." : familyAvailable ? "✓ Available" : "✗ Already taken"}
-                </span>
+                <span className="hint">This founds your family.</span>
               </label>
             </div>
             <label className="field">

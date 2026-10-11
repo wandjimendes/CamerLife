@@ -50,7 +50,6 @@ async function main() {
   check(towns.rows[0].n >= 1 && buildings.rows[0].n >= 1 && units.rows[0].n >= 1 && jobs.rows[0].n >= 1, "seed populated world tables");
 
   console.log("Smoke test: signup trigger");
-  check(await rpc("select public.is_family_name_available('Mbappe')"), "family name available before signup");
   const alice = (
     await db.query<{ id: string }>(
       `insert into auth.users (email, raw_user_meta_data) values ($1, $2) returning id`,
@@ -65,12 +64,17 @@ async function main() {
   )).rows[0];
   check(aliceRow?.first_name === "Alice" && aliceRow.family_name === "Mbappe" && aliceRow.hair === 1 && aliceRow.role === "mother", "user/family/member rows created from metadata");
   check((STARTING_BUDGETS as readonly number[]).includes(aliceRow.balance), `starting budget is one of ${STARTING_BUDGETS.join("/")} (got ${aliceRow.balance})`);
-  check(!(await rpc("select public.is_family_name_available('  mbappe ')")), "family name taken (case-insensitive) after signup");
-  await expectError(
-    db.query(`insert into auth.users (email, raw_user_meta_data) values ($1, $2)`, ["dup@example.com", JSON.stringify({ first_name: "Dup", family_name: "MBAPPE" })]),
-    "families_name_unique_ci",
-    "duplicate family name rejects signup",
-  );
+  const dup = (
+    await db.query<{ id: string }>(`insert into auth.users (email, raw_user_meta_data) values ($1, $2) returning id`, [
+      "dup@example.com", JSON.stringify({ first_name: "Dup", family_name: "MBAPPE" }),
+    ])
+  ).rows[0].id;
+  const dupFam = (await db.query<{ same: boolean; n: number }>(
+    `select (select family_id from public.users where id = $1) = (select family_id from public.users where id = $2) as same,
+            (select count(*)::int from public.families where lower(name) = 'mbappe') as n`,
+    [alice, dup],
+  )).rows[0];
+  check(!dupFam.same && dupFam.n === 2, "family names are not unique: same name founds a separate family");
   const bob = (
     await db.query<{ id: string }>(`insert into auth.users (email, raw_user_meta_data) values ($1, $2) returning id`, [
       "bob@example.com", JSON.stringify({ first_name: "Bob", family_name: "Eto'o", family_role: "bogus" }),
@@ -157,7 +161,7 @@ async function main() {
   check(Number(await rpc<number>("select count(*)::int from public.users")) === 1, "users: only own row visible");
   check(Number(await rpc<number>("select count(*)::int from public.transactions where user_id <> $1", [bob])) === 0, "transactions: only own rows visible");
   check(Number(await rpc<number>("select count(*)::int from public.units")) >= 1, "units: world data readable");
-  check(Number(await rpc<number>("select count(*)::int from public.profiles")) === 2, "profiles view: all players visible");
+  check(Number(await rpc<number>("select count(*)::int from public.profiles")) === 3, "profiles view: all players visible");
   await expectError(db.query("update public.users set balance = 999999999 where id = $1", [bob]), "", "direct balance update blocked by RLS/grants");
   await db.exec("reset role");
   check(Number(await rpc<number>("select balance::int from public.users where id = $1", [bob])) === 80000 + job.salary, "balance unchanged after blocked update");

@@ -141,7 +141,6 @@ async function handleAuth(db: PGlite, req: http.IncomingMessage, url: URL, body:
       await db.query("insert into auth.users (email, encrypted_password, raw_user_meta_data) values ($1, $2, $3)", [email, hashPassword(password), JSON.stringify(meta)]);
     } catch (e) {
       const msg = (e as Error).message;
-      if (msg.includes("families_name_unique_ci")) throw new HttpError(422, "That family name is already taken.", "signup_failed");
       throw new HttpError(500, `Database error saving new user: ${msg}`, "unexpected_failure");
     }
     const u = (await findUser(db, "email = $1", [email]))!;
