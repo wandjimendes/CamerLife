@@ -69,3 +69,32 @@ export function buildInterior(
     toTile: (x, y) => ({ x: Math.floor(x / TILE) - 1, y: Math.floor(y / TILE) - 1 }),
   };
 }
+
+const INTERIOR_ZOOM = 3;
+
+/**
+ * Points the main camera at an interior. Rooms that fit on screen are shown
+ * whole and centred (camera bounds must be removed for that - with bounds
+ * set, Phaser clamps the scroll to 0 and pins small rooms to the top-left).
+ * Larger rooms scroll with the player. Re-evaluated on viewport resize.
+ */
+export function fitInteriorCamera(scene: Phaser.Scene, interior: Interior, follow: Phaser.GameObjects.GameObject): void {
+  const cam = scene.cameras.main;
+  cam.setZoom(INTERIOR_ZOOM);
+  cam.setRoundPixels(true);
+
+  const apply = () => {
+    const fits = interior.widthPx * INTERIOR_ZOOM <= scene.scale.width && interior.heightPx * INTERIOR_ZOOM <= scene.scale.height;
+    if (fits) {
+      cam.stopFollow();
+      cam.removeBounds();
+      cam.centerOn(interior.widthPx / 2, interior.heightPx / 2);
+    } else {
+      cam.setBounds(0, 0, interior.widthPx, interior.heightPx);
+      cam.startFollow(follow, true, 0.2, 0.2);
+    }
+  };
+  apply();
+  scene.scale.on(Phaser.Scale.Events.RESIZE, apply);
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.scale.off(Phaser.Scale.Events.RESIZE, apply));
+}

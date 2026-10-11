@@ -15,7 +15,7 @@ import { bridge } from "../bridge";
 import { PlayerInput } from "../input";
 import { Character } from "../entities/Character";
 import { RemotePlayers } from "../entities/RemotePlayers";
-import { buildInterior, type Interior } from "../interior";
+import { buildInterior, fitInteriorCamera, type Interior } from "../interior";
 
 interface HouseInit {
   unitId: string;
@@ -163,15 +163,7 @@ export class HouseScene extends Phaser.Scene {
     this.physics.add.collider(this.player, interior.walls);
     this.physics.add.collider(this.player, this.blockers);
 
-    const cam = this.cameras.main;
-    cam.setBounds(0, 0, interior.widthPx, interior.heightPx);
-    cam.startFollow(this.player, true, 0.2, 0.2);
-    cam.setRoundPixels(true);
-    // Small rooms: keep the whole interior centred instead of scrolling.
-    if (interior.widthPx * 3 < this.scale.width && interior.heightPx * 3 < this.scale.height) {
-      cam.stopFollow();
-      cam.centerOn(interior.widthPx / 2, interior.heightPx / 2);
-    }
+    fitInteriorCamera(this, interior, this.player);
 
     this.remote = new RemotePlayers(this, room, room.sessionId);
 

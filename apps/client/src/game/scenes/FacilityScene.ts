@@ -5,7 +5,7 @@ import { useGame } from "../../store/game";
 import { bridge } from "../bridge";
 import { PlayerInput } from "../input";
 import { Character } from "../entities/Character";
-import { buildInterior, type Interior } from "../interior";
+import { buildInterior, fitInteriorCamera, type Interior } from "../interior";
 
 interface FacilityInit {
   buildingSlug: string;
@@ -74,11 +74,7 @@ export class FacilityScene extends Phaser.Scene {
     this.physics.add.collider(this.player, this.interior.walls);
     this.physics.add.collider(this.player, props);
 
-    const cam = this.cameras.main;
-    cam.setZoom(3);
-    cam.setBounds(0, 0, this.interior.widthPx, this.interior.heightPx);
-    cam.startFollow(this.player, true, 0.2, 0.2);
-    cam.setRoundPixels(true);
+    fitInteriorCamera(this, this.interior, this.player);
 
     this.add
       .text(this.interior.widthPx / 2, 4, this.data2.name, { fontFamily: "Nunito", fontSize: "7px", color: "#fff", stroke: "#000", strokeThickness: 2, resolution: 4 })
