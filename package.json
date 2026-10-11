@@ -18,7 +18,8 @@
     "gen": "npm run gen:assets && npm run gen:map && npm run gen:seed",
     "gen:seed": "tsx tools/gen-seed.ts",
     "preview:map": "tsx tools/preview-map.ts",
-    "check:sql": "tsx tools/check-sql.ts"
+    "check:sql": "tsx tools/check-sql.ts",
+    "dev:db": "tsx tools/dev-supabase.ts"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",

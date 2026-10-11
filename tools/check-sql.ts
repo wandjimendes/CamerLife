@@ -8,35 +8,8 @@
  * Supabase-only pieces (auth schema, auth.uid(), roles) are shimmed.
  * Run: npm run check:sql
  */
-import { readFileSync, readdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import { PGlite } from "@electric-sql/pglite";
-import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
 import { STARTING_BUDGETS } from "../packages/shared/src/index";
-
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const MIGRATIONS = resolve(ROOT, "supabase/migrations");
-const SEED = resolve(ROOT, "supabase/seed.sql");
-
-// Minimal stand-in for what Supabase provisions on every project.
-const SUPABASE_SHIM = `
-  create role anon nologin;
-  create role authenticated nologin;
-  create role service_role nologin bypassrls;
-
-  create schema auth;
-  create table auth.users (
-    id                 uuid primary key default gen_random_uuid(),
-    email              text,
-    raw_user_meta_data jsonb not null default '{}'::jsonb,
-    created_at         timestamptz not null default now()
-  );
-  create or replace function auth.uid() returns uuid
-  language sql stable as $$
-    select nullif(current_setting('request.jwt.claims', true)::jsonb ->> 'sub', '')::uuid;
-  $$;
-`;
+import { bootSupabaseLikeDb, jwtClaims } from "./pglite-supabase";
 
 let failures = 0;
 function check(cond: unknown, label: string) {
@@ -58,31 +31,17 @@ async function expectError(p: Promise<unknown>, needle: string, label: string) {
 }
 
 async function main() {
-  const db = new PGlite({ extensions: { pgcrypto } });
+  const db = await bootSupabaseLikeDb({ log: (m) => console.log(m) });
 
   // Postgres rejects SET LOCAL for custom GUCs unless set at least once; use set_config.
   const asUser = (uid: string | null, role = "authenticated") =>
-    db.query(`select set_config('request.jwt.claims', $1, false)`, [
-      JSON.stringify({ sub: uid ?? "", role }),
-    ]);
+    db.query(`select set_config('request.jwt.claims', $1, false)`, [jwtClaims(uid, role as "authenticated" | "service_role")]);
   const asServer = () => asUser(null, "service_role");
   const rpc = async <T = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T> => {
     const r = await db.query<Record<string, T>>(sql, params);
     return Object.values(r.rows[0])[0];
   };
 
-  console.log("Shimming Supabase auth schema and roles...");
-  await db.exec(SUPABASE_SHIM);
-
-  console.log("Applying migrations...");
-  for (const f of readdirSync(MIGRATIONS).filter((f) => f.endsWith(".sql")).sort()) {
-    process.stdout.write(`  ${f} ... `);
-    await db.exec(readFileSync(resolve(MIGRATIONS, f), "utf8"));
-    console.log("ok");
-  }
-
-  console.log("Applying seed...");
-  await db.exec(readFileSync(SEED, "utf8"));
   const towns = await db.query<{ n: number }>("select count(*)::int as n from public.towns");
   const buildings = await db.query<{ n: number }>("select count(*)::int as n from public.buildings");
   const units = await db.query<{ n: number }>("select count(*)::int as n from public.units");
